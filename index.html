@@ -90,5 +90,19 @@
   <footer>
     ClassExam — Learn. Practice. Compete. Excel.
   </footer>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  const firebaseConfig = {
+  apiKey: "AIzaSyAnlLd5OLIO0qDp1WrtvWQw5DNs8_tGCTI",
+  authDomain: "classexam-57351.firebaseapp.com",
+  projectId: "classexam-57351",
+  storageBucket: "classexam-57351.firebasestorage.app",
+  messagingSenderId: "688337040866",
+  appId: "1:688337040866:web:f111d648d364a20dcbf5bb"
+};
+    const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+    </script>
 </body>
   </html>
