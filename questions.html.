@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClassExam | Question Management</title>
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f4f6fb;
+  color: #172554;
+}
+header {
+  background: #142b55;
+  color: white;
+  padding: 20px;
+}
+main {
+  max-width: 750px;
+  margin: 25px auto;
+  padding: 15px;
+}
+.card {
+  background: white;
+  padding: 22px;
+  border-radius: 12px;
+}
+input, textarea, select {
+  width: 100%;
+  padding: 12px;
+  margin: 8px 0 15px;
+  box-sizing: border-box;
+}
+button {
+  background: #142b55;
+  color: white;
+  padding: 12px 18px;
+  border: 0;
+  border-radius: 7px;
+}
+</style>
+</head>
+<body>
+<header>
+<h1>ClassExam</h1>
+<p>Question Management</p>
+</header>
+
+<main>
+<div class="card">
+<h2>Add Examination Question</h2>
+
+<label>Subject</label>
+<select id="subject">
+<option>Mathematics</option>
+<option>Biology</option>
+<option>English</option>
+<option>Physics</option>
+<option>Chemistry</option>
+<option>Aptitude</option>
+</select>
+
+<label>Question</label>
+<textarea id="question" rows="3"
+placeholder="Enter your question"></textarea>
+
+<label>Option A</label>
+<input id="a" placeholder="Enter option A">
+
+<label>Option B</label>
+<input id="b" placeholder="Enter option B">
+
+<label>Option C</label>
+<input id="c" placeholder="Enter option C">
+
+<label>Option D</label>
+<input id="d" placeholder="Enter option D">
+
+<label>Correct answer</label>
+<select id="answer">
+<option value="">Select correct answer</option>
+<option>A</option>
+<option>B</option>
+<option>C</option>
+<option>D</option>
+</select>
+
+<button onclick="addQuestion()">Add question</button>
+<p id="message"></p>
+</div>
+
+<div class="card" style="margin-top:20px">
+<h2>Question Preview</h2>
+<div id="preview">No questions added yet.</div>
+</div>
+</main>
+
+<script>
+function addQuestion() {
+  const subject = document.getElementById("subject").value;
+  const question = document.getElementById("question").value.trim();
+  const a = document.getElementById("a").value.trim();
+  const b = document.getElementById("b").value.trim();
+  const c = document.getElementById("c").value.trim();
+  const d = document.getElementById("d").value.trim();
+  const answer = document.getElementById("answer").value;
+
+  if (!question || !a || !b || !c || !d || !answer) {
+    document.getElementById("message").textContent =
+      "Please complete all fields.";
+    return;
+  }
+
+  const preview = document.getElementById("preview");
+  const item = document.createElement("div");
+  const heading = document.createElement("h3");
+  heading.textContent = subject;
+  item.appendChild(heading);
+
+  const text = document.createElement("p");
+  text.textContent = question;
+  item.appendChild(text);
+
+  [a,b,c,d].forEach((option, i) => {
+    const line = document.createElement("p");
+    line.textContent = String.fromCharCode(65+i) + ". " + option;
+    item.appendChild(line);
+  });
+
+  const correct = document.createElement("p");
+  correct.textContent = "Correct answer: " + answer;
+  item.appendChild(correct);
+  preview.appendChild(item);
+
+  document.getElementById("message").textContent =
+    "Question added to this preview.";
+}
+</script>
+</body>
+</html>
