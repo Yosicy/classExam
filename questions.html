@@ -3,206 +3,133 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ClassExam AI Question Generator</title>
 <style>
-* { box-sizing: border-box; }
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: #f2f5fb;
-  color: #17233c;
-}
-header {
-  background: #101d3a;
-  color: white;
-  padding: 22px;
-  text-align: center;
-}
-main {
-  max-width: 700px;
-  margin: 25px auto;
-  padding: 15px;
-}
-.panel {
-  background: white;
-  padding: 22px;
-  border-radius: 14px;
-  box-shadow: 0 3px 14px #00000012;
-}
-h2 { margin-top: 0; }
-label {
-  display: block;
-  margin-top: 17px;
-  font-weight: bold;
-}
-input, select {
-  width: 100%;
-  padding: 13px;
-  margin-top: 8px;
-  border: 1px solid #ccd3df;
-  border-radius: 8px;
-  font-size: 16px;
-}
-.upload {
-  border: 2px dashed #8799bd;
-  padding: 25px 15px;
-  border-radius: 12px;
-  text-align: center;
-  background: #f8faff;
-}
-button {
-  width: 100%;
-  padding: 14px;
-  margin-top: 20px;
-  background: #2455c3;
-  color: white;
-  border: 0;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: bold;
-}
-button:disabled {
-  background: #9aa8c2;
-}
-#status {
-  margin-top: 15px;
-  line-height: 1.5;
-  overflow-wrap: anywhere;
-}
-.note {
-  color: #59677e;
-  font-size: 14px;
-  line-height: 1.5;
-}
-footer {
-  text-align: center;
-  padding: 20px;
-  color: #667085;
-}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial;background:#f2f5fb;color:#17233c}
+header{background:#101d3a;color:white;text-align:center;padding:22px}
+main{max-width:750px;margin:25px auto;padding:15px}
+.panel{background:white;padding:22px;border-radius:14px;box-shadow:0 3px 14px #0001}
+label{display:block;font-weight:bold;margin-top:17px}
+input,select,textarea{width:100%;padding:13px;margin-top:8px;border:1px solid #ccd3df;border-radius:8px;font-size:16px}
+.upload{border:2px dashed #8799bd;padding:20px;border-radius:12px;text-align:center;background:#f8faff}
+button{width:100%;padding:14px;margin-top:18px;background:#2455c3;color:white;border:0;border-radius:8px;font-size:16px;font-weight:bold}
+button:disabled{opacity:.5}
+.note{font-size:13px;color:#667085;line-height:1.5}
+#status{margin-top:15px;overflow-wrap:anywhere}
+.question{padding:15px;border:1px solid #dce2ec;border-radius:10px;margin-top:15px}
+.option{padding:9px;background:#f4f6fa;margin:6px 0;border-radius:6px}
+footer{text-align:center;padding:20px;color:#667085}
 </style>
 </head>
-
 <body>
+
 <header>
-  <h1>ClassExam</h1>
-  <p>AI Question Generator</p>
+<h1>ClassExam</h1>
+<p>AI Question Generator</p>
 </header>
 
 <main>
 <section class="panel">
-  <h2>Upload Reading Material</h2>
-  <p>Upload a textbook chapter or an existing examination paper.</p>
+<h2>Upload Reading Material</h2>
+<p>Convert reading materials and examination PDFs into questions.</p>
 
-  <label for="subject">Select subject</label>
-  <select id="subject">
-    <option>Mathematics</option>
-    <option>Biology</option>
-    <option>English</option>
-    <option>Physics</option>
-    <option>Chemistry</option>
-    <option>Aptitude</option>
-  </select>
+<label for="subject">Subject</label>
+<select id="subject">
+<option>Mathematics</option>
+<option>Biology</option>
+<option>English</option>
+<option>Physics</option>
+<option>Chemistry</option>
+<option>Aptitude</option>
+</select>
 
-  <label for="file">Choose your file</label>
-  <div class="upload">
-    <p>📄 Select PDF, Word, or text file</p>
-    <input
-      type="file"
-      id="file"
-      accept=".pdf,.docx,.txt"
-    >
-    <p class="note">Maximum file size: 10 MB</p>
-  </div>
+<label for="file">Upload your file</label>
+<div class="upload">
+<p>📄 Choose PDF, Word or TXT file</p>
+<input type="file" id="file" accept=".pdf,.docx,.txt">
+<p class="note">Maximum selected file size: 500 MB</p>
+</div>
+<p id="fileInfo" class="note">No file selected.</p>
 
-  <p id="fileInfo" class="note">No file selected.</p>
+<label for="count">Number of questions</label>
+<input type="number" id="count" min="1" max="100" value="20">
 
-  <label for="count">Number of questions</label>
-  <input
-    type="number"
-    id="count"
-    min="1"
-    max="100"
-    value="20"
-  >
+<label for="difficulty">Difficulty</label>
+<select id="difficulty">
+<option>Easy</option>
+<option selected>Medium</option>
+<option>Hard</option>
+<option>Mixed</option>
+</select>
 
-  <label for="difficulty">Difficulty level</label>
-  <select id="difficulty">
-    <option>Easy</option>
-    <option selected>Medium</option>
-    <option>Hard</option>
-    <option>Mixed</option>
-  </select>
+<label for="type">Generation mode</label>
+<select id="type">
+<option value="new">Generate new questions</option>
+<option value="extract">Extract existing MCQs</option>
+<option value="both">Both</option>
+</select>
 
-  <label for="type">Question type</label>
-  <select id="type">
-    <option>Generate new questions</option>
-    <option>Extract existing MCQs</option>
-    <option>Both</option>
-  </select>
+<button id="generate">Generate Questions</button>
 
-  <button id="generate">Generate Questions</button>
+<div id="status" role="status">Select a file to begin.</div>
 
-  <div id="status" role="status">
-    Select a file to get started.
-  </div>
+<h2>Question Preview</h2>
+<div id="preview">
+<p class="note">Generated questions will appear here after AI is connected.</p>
+</div>
 
-  <p class="note">
-    AI processing is not connected yet. Your selected file
-    remains in your browser; this page does not upload it
-    to a server or generate questions yet.
-  </p>
+<p class="note">
+AI processing is not connected yet. This page currently checks
+the selected file locally; it does not upload or process it.
+A secure backend and compatible storage are required for
+actual uploads, especially large files.
+</p>
 </section>
 </main>
 
-<footer>
-  © 2026 ClassExam | Learn • Practice • Excel
-</footer>
+<footer>© 2026 ClassExam | Learn • Practice • Excel</footer>
 
 <script>
-const fileInput = document.getElementById("file");
-const fileInfo = document.getElementById("fileInfo");
-const statusBox = document.getElementById("status");
-const generateButton = document.getElementById("generate");
+const fileInput=document.getElementById("file");
+const fileInfo=document.getElementById("fileInfo");
+const statusBox=document.getElementById("status");
+const generateButton=document.getElementById("generate");
 
-fileInput.addEventListener("change", function () {
-  const file = fileInput.files[0];
+fileInput.addEventListener("change",()=>{
+ const file=fileInput.files[0];
+ if(!file){
+  fileInfo.textContent="No file selected.";
+  return;
+ }
 
-  if (!file) {
-    fileInfo.textContent = "No file selected.";
-    return;
-  }
+ const allowed=/\.(pdf|docx|txt)$/i.test(file.name);
+ if(!allowed){
+  fileInput.value="";
+  fileInfo.textContent="Only PDF, DOCX and TXT files are allowed.";
+  return;
+ }
 
-  const allowed = /\.(pdf|docx|txt)$/i.test(file.name);
+ if(file.size>500*1024*1024){
+  fileInput.value="";
+  fileInfo.textContent="File is too large. Maximum size is 500 MB.";
+  return;
+ }
 
-  if (!allowed) {
-    fileInput.value = "";
-    fileInfo.textContent = "Please select a PDF, DOCX, or TXT file.";
-    return;
-  }
-
-  if (file.size > 10 * 1024 * 1024) {
-    fileInput.value = "";
-    fileInfo.textContent = "File is too large. Maximum size is 10 MB.";
-    return;
-  }
-
-  fileInfo.textContent =
-    "Selected: " + file.name +
-    " (" + (file.size / 1024 / 1024).toFixed(2) + " MB)";
-
-  statusBox.textContent = "File selected successfully.";
+ fileInfo.textContent="Selected: "+file.name+
+ " ("+(file.size/1024/1024).toFixed(2)+" MB)";
+ statusBox.textContent="File selected successfully.";
 });
 
-generateButton.addEventListener("click", function () {
-  if (!fileInput.files.length) {
-    statusBox.textContent = "Please select a file first.";
-    return;
-  }
+generateButton.addEventListener("click",()=>{
+ if(!fileInput.files.length){
+  statusBox.textContent="Please select a file first.";
+  return;
+ }
 
-  statusBox.textContent =
-    "Your file is selected. AI processing will be enabled " +
-    "after we connect the secure backend.";
+ statusBox.textContent=
+ "File selected. AI processing will be available after backend connection.";
 });
 </script>
 </body>
