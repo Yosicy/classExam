@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,15 +12,19 @@ main{max-width:800px;margin:25px auto;padding:15px}
 .card{background:white;padding:20px;border-radius:12px;margin-bottom:20px}
 input,textarea,select{width:100%;padding:12px;margin:8px 0 15px;box-sizing:border-box}
 textarea{min-height:90px}
-button{background:#142b55;color:white;padding:12px 20px;border:0;border-radius:7px;margin:5px 0}
+button{background:#142b55;color:white;padding:12px 20px;border:0;border-radius:7px;margin:5px 0;cursor:pointer}
+button:disabled{opacity:.5;cursor:not-allowed}
+.question-card{border:1px solid #dbe2ef;padding:15px;border-radius:9px;margin:12px 0}
 #bank{display:none}
+.muted{color:#64748b;font-size:14px}
 </style>
 </head>
 <body>
 <header>
 <h1>ClassExam</h1>
-<p>Question Bank</p>
+<p>Question Bank — Admin Panel</p>
 </header>
+
 <main>
 <section id="login" class="card">
 <h2>Admin Login</h2>
@@ -35,16 +40,21 @@ button{background:#142b55;color:white;padding:12px 20px;border:0;border-radius:7
 
 <label>Grade</label>
 <select id="grade">
-<option>Grade 9</option><option>Grade 10</option>
-<option>Grade 11</option><option>Grade 12</option>
+<option>Grade 9</option>
+<option>Grade 10</option>
+<option>Grade 11</option>
+<option>Grade 12</option>
 <option>UEE</option>
 </select>
 
 <label>Subject</label>
 <select id="subject">
-<option>Mathematics</option><option>Biology</option>
-<option>English</option><option>Physics</option>
-<option>Chemistry</option><option>Aptitude</option>
+<option>Mathematics</option>
+<option>Biology</option>
+<option>English</option>
+<option>Physics</option>
+<option>Chemistry</option>
+<option>Aptitude</option>
 </select>
 
 <label>Question</label>
@@ -65,8 +75,10 @@ button{background:#142b55;color:white;padding:12px 20px;border:0;border-radius:7
 <label>Correct Answer</label>
 <select id="answer">
 <option value="">Choose answer</option>
-<option value="A">A</option><option value="B">B</option>
-<option value="C">C</option><option value="D">D</option>
+<option value="A">A</option>
+<option value="B">B</option>
+<option value="C">C</option>
+<option value="D">D</option>
 </select>
 
 <label>Explanation</label>
@@ -76,20 +88,41 @@ button{background:#142b55;color:white;padding:12px 20px;border:0;border-radius:7
 <p id="status"></p>
 </div>
 
+<div class="card">
+<h2>Draft Questions</h2>
+<p class="muted">Review your saved questions and publish them when ready.</p>
+<button id="refreshButton">Refresh Drafts</button>
+<p id="draftStatus"></p>
+<div id="draftList"></div>
+</div>
+
 <button id="logoutButton">Logout</button>
 </section>
 </main>
 
 <script type="module">
-import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {initializeApp}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
 import {
-getAuth,signInWithEmailAndPassword,onAuthStateChanged,signOut
+getAuth,
+signInWithEmailAndPassword,
+onAuthStateChanged,
+signOut
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
 import {
-getFirestore,collection,addDoc,serverTimestamp
+getFirestore,
+collection,
+addDoc,
+getDocs,
+query,
+where,
+doc,
+writeBatch,
+serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// Replace this object with your actual Firebase configuration.
 const firebaseConfig = {
   apiKey: "AIzaSyAnlLd5OLIO0qDp1WrtvWQw5DNs8_tGCTI",
   authDomain: "classexam-57351.firebaseapp.com",
@@ -99,71 +132,187 @@ const firebaseConfig = {
   appId: "1:688337040866:web:f111d648d364a20dcbf5bb"
 };
 
-const app=initializeApp(firebaseConfig);
-const auth=getAuth(app);
-const db=getFirestore(app);
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-const login=document.getElementById("login");
-const bank=document.getElementById("bank");
-const status=document.getElementById("status");
+const login = document.getElementById("login");
+const bank = document.getElementById("bank");
+const status = document.getElementById("status");
+const draftList = document.getElementById("draftList");
+const draftStatus = document.getElementById("draftStatus");
 
-document.getElementById("loginButton").onclick=async()=>{
-try{
-await signInWithEmailAndPassword(
-auth,
-document.getElementById("email").value.trim(),
-document.getElementById("password").value
-);
-document.getElementById("loginMessage").textContent="";
-}catch(error){
-document.getElementById("loginMessage").textContent="Login failed: "+error.message;
-}
+document.getElementById("loginButton").onclick = async () => {
+  try {
+    await signInWithEmailAndPassword(
+      auth,
+      document.getElementById("email").value.trim(),
+      document.getElementById("password").value
+    );
+    document.getElementById("loginMessage").textContent = "";
+  } catch (error) {
+    document.getElementById("loginMessage").textContent =
+      "Login failed: " + error.message;
+  }
 };
 
-onAuthStateChanged(auth,user=>{
-login.style.display=user?"none":"block";
-bank.style.display=user?"block":"none";
+onAuthStateChanged(auth, async user => {
+  login.style.display = user ? "none" : "block";
+  bank.style.display = user ? "block" : "none";
+
+  if (user) {
+    await loadDrafts();
+  } else {
+    draftList.replaceChildren();
+  }
 });
 
-document.getElementById("logoutButton").onclick=()=>signOut(auth);
+document.getElementById("logoutButton").onclick = () => signOut(auth);
 
-document.getElementById("saveButton").onclick=async()=>{
-const Question=document.getElementById("question").value.trim();
-const OptionA=document.getElementById("A").value.trim();
-const OptionB=document.getElementById("B").value.trim();
-const OptionC=document.getElementById("C").value.trim();
-const OptionD=document.getElementById("D").value.trim();
-const correctAnswer=document.getElementById("answer").value;
-const Explanation=document.getElementById("explanation").value.trim();
+document.getElementById("refreshButton").onclick = loadDrafts;
 
-if(!Question||!OptionA||!OptionB||!OptionC||!OptionD||!correctAnswer){
-status.textContent="Please complete the question and all four options, then choose the answer.";
-return;
-}
+document.getElementById("saveButton").onclick = async () => {
+  const Question = document.getElementById("question").value.trim();
+  const OptionA = document.getElementById("A").value.trim();
+  const OptionB = document.getElementById("B").value.trim();
+  const OptionC = document.getElementById("C").value.trim();
+  const OptionD = document.getElementById("D").value.trim();
+  const correctAnswer = document.getElementById("answer").value;
+  const Explanation = document.getElementById("explanation").value.trim();
 
-try{
-await addDoc(collection(db,"questions"),{
-Grade:document.getElementById("grade").value,
-Subject:document.getElementById("subject").value,
-Question,OptionA,OptionB,OptionC,OptionD,
-correctAnswer,Explanation,
-status:"draft",
-createdBy:auth.currentUser.uid,
-createdAt:serverTimestamp()
-});
-status.textContent="Question saved successfully!";
-document.getElementById("question").value="";
-document.getElementById("A").value="";
-document.getElementById("B").value="";
-document.getElementById("C").value="";
-document.getElementById("D").value="";
-document.getElementById("answer").value="";
-document.getElementById("explanation").value="";
-}catch(error){
-status.textContent="Could not save: "+error.message;
-}
+  if (
+    !Question || !OptionA || !OptionB ||
+    !OptionC || !OptionD || !correctAnswer
+  ) {
+    status.textContent = "Complete the question, all four options, and correct answer.";
+    return;
+  }
+
+  try {
+    await addDoc(collection(db, "questions"), {
+      Grade: document.getElementById("grade").value,
+      Subject: document.getElementById("subject").value,
+      Question,
+      OptionA,
+      OptionB,
+      OptionC,
+      OptionD,
+      correctAnswer,
+      Explanation,
+      status: "draft",
+      createdBy: auth.currentUser.uid,
+      createdAt: serverTimestamp()
+    });
+
+    status.textContent = "Question saved successfully!";
+
+    ["question", "A", "B", "C", "D", "explanation"].forEach(id => {
+      document.getElementById(id).value = "";
+    });
+
+    document.getElementById("answer").value = "";
+
+    await loadDrafts();
+
+  } catch (error) {
+    status.textContent = "Could not save: " + error.message;
+  }
 };
+
+async function loadDrafts() {
+  draftStatus.textContent = "Loading drafts...";
+  draftList.replaceChildren();
+
+  try {
+    const draftsQuery = query(
+      collection(db, "questions"),
+      where("status", "==", "draft")
+    );
+
+    const snapshot = await getDocs(draftsQuery);
+
+    if (snapshot.empty) {
+      draftStatus.textContent = "No draft questions found.";
+      return;
+    }
+
+    draftStatus.textContent = snapshot.size + " draft question(s) found.";
+
+    snapshot.forEach(questionDoc => {
+      const data = questionDoc.data();
+
+      const card = document.createElement("div");
+      card.className = "question-card";
+
+      const heading = document.createElement("h3");
+      heading.textContent = data.Grade + " — " + data.Subject;
+
+      const questionText = document.createElement("p");
+      questionText.textContent = data.Question;
+
+      const publishButton = document.createElement("button");
+      publishButton.textContent = "Publish Question";
+
+      publishButton.onclick = () => publishQuestion(
+        questionDoc.id,
+        data,
+        publishButton
+      );
+
+      card.append(heading, questionText, publishButton);
+      draftList.appendChild(card);
+    });
+
+  } catch (error) {
+    draftStatus.textContent = "Could not load drafts: " + error.message;
+  }
+}
+
+async function publishQuestion(id, data, button) {
+  if (!auth.currentUser) {
+    draftStatus.textContent = "Please log in again.";
+    return;
+  }
+
+  button.disabled = true;
+  button.textContent = "Publishing...";
+
+  try {
+    const batch = writeBatch(db);
+
+    const publicRef = doc(collection(db, "publishedQuestions"));
+    const privateRef = doc(db, "questions", id);
+
+    // Only student-safe question fields are published.
+    batch.set(publicRef, {
+      Grade: data.Grade,
+      Subject: data.Subject,
+      Question: data.Question,
+      OptionA: data.OptionA,
+      OptionB: data.OptionB,
+      OptionC: data.OptionC,
+      OptionD: data.OptionD,
+      publishedAt: serverTimestamp()
+    });
+
+    // Keep the answer and explanation in the private question bank.
+    batch.update(privateRef, {
+      status: "published",
+      publishedQuestionId: publicRef.id,
+      publishedAt: serverTimestamp()
+    });
+
+    await batch.commit();
+
+    draftStatus.textContent = "Question published successfully!";
+    await loadDrafts();
+
+  } catch (error) {
+    button.disabled = false;
+    button.textContent = "Publish Question";
+    draftStatus.textContent = "Publishing failed: " + error.message;
+  }
+}
 </script>
 </body>
-                                                       </html>
-                                                       
+</html>
