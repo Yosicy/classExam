@@ -1,0 +1,245 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClassExam - Student Examination</title>
+<style>
+body{font-family:Arial,sans-serif;background:#f4f6fb;color:#172554;margin:0}
+header{background:#142b55;color:white;padding:20px}
+main{max-width:850px;margin:25px auto;padding:15px}
+.card{background:white;padding:20px;border-radius:12px;margin-bottom:18px}
+input,select{width:100%;padding:12px;margin:8px 0 15px;box-sizing:border-box}
+button{background:#142b55;color:white;padding:12px 20px;border:0;border-radius:7px;margin:5px 0}
+.question{border-bottom:1px solid #ddd;padding:15px 0}
+.option{display:block;padding:8px}
+#studentArea,#examArea{display:none}
+#timer{font-size:22px;font-weight:bold}
+</style>
+</head>
+<body>
+
+<header>
+<h1>ClassExam</h1>
+<p>Student Examination Portal</p>
+</header>
+
+<main>
+<section id="loginArea" class="card">
+<h2>Student Login</h2>
+<input id="email" type="email" placeholder="Student email">
+<input id="password" type="password" placeholder="Password">
+<button id="loginButton">Login</button>
+<p id="loginMessage"></p>
+</section>
+
+<section id="studentArea" class="card">
+<h2>Student Information</h2>
+<label>Student name</label>
+<input id="studentName" placeholder="Enter your name">
+
+<label>Grade</label>
+<select id="grade">
+<option>Grade 9</option>
+<option>Grade 10</option>
+<option>Grade 11</option>
+<option>Grade 12</option>
+<option>UEE</option>
+</select>
+
+<label>Subject</label>
+<select id="subject">
+<option>Mathematics</option>
+<option>Biology</option>
+<option>English</option>
+<option>Physics</option>
+<option>Chemistry</option>
+<option>Aptitude</option>
+</select>
+
+<button id="startButton">Start Examination</button>
+<p id="loadMessage"></p>
+</section>
+
+<section id="examArea" class="card">
+<h2>Examination</h2>
+<p id="studentInfo"></p>
+<p>Time remaining:</p>
+<p id="timer">60:00</p>
+<div id="questions"></div>
+<button id="finishButton">Finish Examination</button>
+<p id="resultMessage"></p>
+</section>
+
+<button id="logoutButton" style="display:none">Logout</button>
+</main>
+
+<script type="module">
+import {initializeApp}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+getAuth,signInWithEmailAndPassword,
+onAuthStateChanged,signOut
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+import {
+getFirestore,collection,getDocs,query,where
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+// Replace with the same Firebase configuration used in admin.html.
+const firebaseConfig = {
+  apiKey: "AIzaSyAnlLd5OLIO0qDp1WrtvWQw5DNs8_tGCTI",
+  authDomain: "classexam-57351.firebaseapp.com",
+  projectId: "classexam-57351",
+  storageBucket: "classexam-57351.firebasestorage.app",
+  messagingSenderId: "688337040866",
+  appId: "1:688337040866:web:f111d648d364a20dcbf5bb"
+};
+const app=initializeApp(firebaseConfig);
+const auth=getAuth(app);
+const db=getFirestore(app);
+
+const loginArea=document.getElementById("loginArea");
+const studentArea=document.getElementById("studentArea");
+const examArea=document.getElementById("examArea");
+const questionsArea=document.getElementById("questions");
+
+let timerInterval=null;
+let timeLeft=60*60;
+let examStarted=false;
+
+document.getElementById("loginButton").onclick=async()=>{
+try{
+await signInWithEmailAndPassword(
+auth,
+document.getElementById("email").value.trim(),
+document.getElementById("password").value
+);
+document.getElementById("loginMessage").textContent="";
+}catch(error){
+document.getElementById("loginMessage").textContent=
+"Login failed: "+error.message;
+}
+};
+
+onAuthStateChanged(auth,user=>{
+loginArea.style.display=user?"none":"block";
+studentArea.style.display=user?"block":"none";
+document.getElementById("logoutButton").style.display=
+user?"inline-block":"none";
+if(!user){
+examArea.style.display="none";
+}
+});
+
+document.getElementById("logoutButton").onclick=async()=>{
+if(timerInterval) clearInterval(timerInterval);
+await signOut(auth);
+};
+
+function startTimer(){
+timerInterval=setInterval(()=>{
+timeLeft--;
+const minutes=Math.floor(timeLeft/60);
+const seconds=timeLeft%60;
+document.getElementById("timer").textContent=
+String(minutes).padStart(2,"0")+":"+
+String(seconds).padStart(2,"0");
+
+if(timeLeft<=0){
+finishExam();
+}
+},1000);
+}
+
+async function finishExam(){
+if(!examStarted)return;
+examStarted=false;
+clearInterval(timerInterval);
+document.getElementById("finishButton").disabled=true;
+document.getElementById("resultMessage").textContent=
+"Examination finished. Your answers are not yet submitted to the server.";
+}
+
+document.getElementById("startButton").onclick=async()=>{
+const name=document.getElementById("studentName").value.trim();
+const grade=document.getElementById("grade").value;
+const subject=document.getElementById("subject").value;
+const message=document.getElementById("loadMessage");
+
+if(!name){
+message.textContent="Please enter your name.";
+return;
+}
+
+message.textContent="Loading questions...";
+
+try{
+const q=query(
+collection(db,"publishedQuestions"),
+where("Grade","==",grade),
+where("Subject","==",subject)
+);
+
+const snapshot=await getDocs(q);
+
+if(snapshot.empty){
+message.textContent="No published questions found for this grade and subject.";
+return;
+}
+
+questionsArea.innerHTML="";
+
+snapshot.forEach((doc,index)=>{
+const data=doc.data();
+
+const div=document.createElement("div");
+div.className="question";
+
+const title=document.createElement("p");
+title.textContent=(index+1)+". "+data.Question;
+div.appendChild(title);
+
+["A","B","C","D"].forEach(letter=>{
+const label=document.createElement("label");
+label.className="option";
+
+const radio=document.createElement("input");
+radio.type="radio";
+radio.name="question_"+doc.id;
+radio.value=letter;
+
+label.appendChild(radio);
+label.appendChild(document.createTextNode(
+letter+". "+data["Option"+letter]
+));
+div.appendChild(label);
+});
+
+questionsArea.appendChild(div);
+});
+
+document.getElementById("studentInfo").textContent=
+"Student: "+name+" | "+grade+" | "+subject;
+
+studentArea.style.display="none";
+examArea.style.display="block";
+document.getElementById("resultMessage").textContent="";
+document.getElementById("finishButton").disabled=false;
+
+timeLeft=60*60;
+examStarted=true;
+startTimer();
+
+}catch(error){
+message.textContent="Could not load questions: "+error.message;
+}
+};
+
+document.getElementById("finishButton").onclick=finishExam;
+</script>
+</body>
+  </html>
+  
