@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClassExam | Mathematics</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f6fb;
+  color: #172554;
+  margin: 0;
+}
+header {
+  background: #142b55;
+  color: white;
+  padding: 22px;
+  text-align: center;
+}
+main {
+  max-width: 700px;
+  margin: 25px auto;
+  padding: 15px;
+}
+.question {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 18px;
+}
+button {
+  padding: 12px 20px;
+  background: #142b55;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.option {
+  display: block;
+  margin: 12px 0;
+}
+#result { font-weight: bold; }
+</style>
+</head>
+<body>
+<header>
+  <h1>ClassExam</h1>
+  <p>Mathematics Examination</p>
+</header>
+
+<main>
+  <h2>Practice Examination</h2>
+  <p>Select one answer for each question.</p>
+
+  <div class="question">
+    <p>1. Find the derivative of f(x) = x² + 3x.</p>
+    <label class="option"><input type="radio" name="q1" value="A"> A. 2x + 3</label>
+    <label class="option"><input type="radio" name="q1" value="B"> B. x + 3</label>
+    <label class="option"><input type="radio" name="q1" value="C"> C. 2x</label>
+    <label class="option"><input type="radio" name="q1" value="D"> D. x² + 3</label>
+  </div>
+
+  <div class="question">
+    <p>2. Solve: 2x + 5 = 13.</p>
+    <label class="option"><input type="radio" name="q2" value="A"> A. 3</label>
+    <label class="option"><input type="radio" name="q2" value="B"> B. 4</label>
+    <label class="option"><input type="radio" name="q2" value="C"> C. 5</label>
+    <label class="option"><input type="radio" name="q2" value="D"> D. 6</label>
+  </div>
+
+  <button onclick="checkAnswers()">Check answer</button>
+  <p id="result"></p>
+</main>
+
+<script>
+function checkAnswers() {
+  const answers = {q1: "A", q2: "B"};
+  let score = 0;
+
+  for (const q in answers) {
+    const selected = document.querySelector(
+      'input[name="' + q + '"]:checked'
+    );
+    if (selected && selected.value === answers[q]) {
+      score++;
+    }
+  }
+
+  document.getElementById("result").textContent =
+    "Your score: " + score + " / 2";
+}
+</script>
+</body>
+                                                                          </html>
+                                                                          
