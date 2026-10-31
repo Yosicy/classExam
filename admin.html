@@ -1,0 +1,109 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClassExam | Admin Dashboard</title>
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f4f6fb;
+  color: #172554;
+}
+header {
+  background: #142b55;
+  color: white;
+  padding: 22px;
+}
+main {
+  max-width: 850px;
+  margin: 25px auto;
+  padding: 15px;
+}
+.card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  margin: 15px 0;
+}
+input, select {
+  width: 100%;
+  padding: 12px;
+  margin: 8px 0 15px;
+  box-sizing: border-box;
+}
+button {
+  background: #142b55;
+  color: white;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 7px;
+}
+</style>
+</head>
+<body>
+
+<header>
+<h1>ClassExam</h1>
+<p>Administrator Dashboard</p>
+</header>
+
+<main>
+<h2>Examination Management</h2>
+
+<div class="card">
+<h3>Create Examination</h3>
+
+<label>Subject</label>
+<select id="subject">
+<option>Mathematics</option>
+<option>Biology</option>
+<option>English</option>
+<option>Physics</option>
+<option>Chemistry</option>
+<option>Aptitude</option>
+</select>
+
+<label>Examination duration (minutes)</label>
+<input type="number" id="duration" value="60" min="1">
+
+<label>Number of questions</label>
+<input type="number" id="questions" value="20" min="1">
+
+<button onclick="createExam()">Create examination</button>
+<p id="message"></p>
+</div>
+
+<div class="card">
+<h3>Dashboard Features</h3>
+<p>• Manage examinations</p>
+<p>• Manage question banks</p>
+<p>• Manage students</p>
+<p>• View examination results</p>
+<p>• Analyze student performance</p>
+</div>
+</main>
+
+<script>
+function createExam() {
+  const subject = document.getElementById("subject").value;
+  const duration = Number(document.getElementById("duration").value);
+  const questions = Number(document.getElementById("questions").value);
+
+  if (!Number.isInteger(duration) || duration < 1 ||
+      !Number.isInteger(questions) || questions < 1) {
+    document.getElementById("message").textContent =
+      "Enter valid positive whole numbers.";
+    return;
+  }
+
+  document.getElementById("message").textContent =
+    subject + " examination configured: " +
+    duration + " minutes, " + questions + " questions.";
+}
+</script>
+
+</body>
+</html>
