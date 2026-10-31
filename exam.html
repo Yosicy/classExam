@@ -5,284 +5,518 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ClassExam - Student Examination</title>
+
 <style>
-*{box-sizing:border-box}
-body{font-family:Arial,sans-serif;background:#f4f6fb;color:#172554;margin:0}
-header{background:#142b55;color:white;padding:20px}
-main{max-width:850px;margin:25px auto;padding:15px}
-.card{background:white;padding:20px;border-radius:12px;margin-bottom:18px}
-input:not([type=radio]),select{width:100%;padding:12px;margin:8px 0 15px}
-button{background:#142b55;color:white;padding:12px 20px;border:0;border-radius:7px;margin:5px 0;cursor:pointer}
-button:disabled{opacity:.5}
-.question{border-bottom:1px solid #ddd;padding:15px 0}
-.option{display:block;padding:9px;cursor:pointer}
-#studentArea,#examArea{display:none}
-#timer{font-size:24px;font-weight:bold}
-#message{color:#b45309}
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f6fb;
+  color: #172554;
+  margin: 0;
+}
+
+header {
+  background: #142b55;
+  color: white;
+  padding: 20px;
+}
+
+main {
+  max-width: 850px;
+  margin: 25px auto;
+  padding: 15px;
+}
+
+.card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 18px;
+}
+
+input:not([type="radio"]), select {
+  width: 100%;
+  padding: 12px;
+  margin: 8px 0 15px;
+}
+
+button {
+  background: #142b55;
+  color: white;
+  padding: 12px 20px;
+  border: 0;
+  border-radius: 7px;
+  margin: 5px 0;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+.question {
+  border-bottom: 1px solid #ddd;
+  padding: 15px 0;
+}
+
+.option {
+  display: block;
+  padding: 9px;
+  cursor: pointer;
+}
+
+#studentArea, #examArea {
+  display: none;
+}
+
+#timer {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+#message {
+  color: #b45309;
+  overflow-wrap: anywhere;
+}
+
+#loginMessage {
+  color: #b91c1c;
+}
+
+#resultMessage {
+  font-weight: bold;
+}
 </style>
 </head>
+
 <body>
 
 <header>
-<h1>ClassExam</h1>
-<p>Student Examination Portal</p>
+  <h1>ClassExam</h1>
+  <p>Student Examination Portal</p>
 </header>
 
 <main>
+
 <section id="loginArea" class="card">
-<h2>Student Login</h2>
-<input id="email" type="email" placeholder="Student email">
-<input id="password" type="password" placeholder="Password">
-<button id="loginButton">Login</button>
-<p id="loginMessage"></p>
+  <h2>Student Login</h2>
+
+  <input id="email" type="email" placeholder="Student email">
+  <input id="password" type="password" placeholder="Password">
+
+  <button id="loginButton">Login</button>
+
+  <p id="loginMessage"></p>
 </section>
 
 <section id="studentArea" class="card">
-<h2>Student Information</h2>
+  <h2>Student Information</h2>
 
-<label>Student name</label>
-<input id="studentName" placeholder="Enter your name">
+  <label for="studentName">Student name</label>
+  <input id="studentName" placeholder="Enter your name">
 
-<label>Grade</label>
-<select id="grade">
-<option>Grade 9</option>
-<option>Grade 10</option>
-<option>Grade 11</option>
-<option>Grade 12</option>
-<option>UEE</option>
-</select>
+  <label for="grade">Grade</label>
+  <select id="grade">
+    <option>Grade 9</option>
+    <option>Grade 10</option>
+    <option>Grade 11</option>
+    <option>Grade 12</option>
+    <option>UEE</option>
+  </select>
 
-<label>Subject</label>
-<select id="subject">
-<option>Mathematics</option>
-<option>Biology</option>
-<option>English</option>
-<option>Physics</option>
-<option>Chemistry</option>
-<option>Aptitude</option>
-</select>
+  <label for="subject">Subject</label>
+  <select id="subject">
+    <option>Mathematics</option>
+    <option>Biology</option>
+    <option>English</option>
+    <option>Physics</option>
+    <option>Chemistry</option>
+    <option>Aptitude</option>
+  </select>
 
-<button id="startButton">Start Examination</button>
-<p id="loadMessage"></p>
+  <button id="startButton">Start Examination</button>
+  <p id="message"></p>
 </section>
 
 <section id="examArea" class="card">
-<h2>Examination</h2>
-<p id="studentInfo"></p>
-<p>Time remaining:</p>
-<p id="timer">60:00</p>
-<div id="questions"></div>
-<button id="finishButton">Finish Examination</button>
-<p id="resultMessage"></p>
+  <h2>Examination</h2>
+
+  <p id="studentInfo"></p>
+
+  <p>Time remaining:</p>
+  <p id="timer">60:00</p>
+
+  <div id="questions"></div>
+
+  <button id="finishButton">Finish Examination</button>
+
+  <p id="resultMessage"></p>
 </section>
 
 <button id="logoutButton" style="display:none">Logout</button>
+
 </main>
 
 <script type="module">
-import {initializeApp}
+
+import { initializeApp }
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
 import {
-getAuth,
-signInWithEmailAndPassword,
-onAuthStateChanged,
-signOut
+  getAuth,
+  signInWithEmailAndPassword,
+  onAuthStateChanged,
+  signOut
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 import {
-getFirestore,
-collection,
-getDocs
+  getFirestore,
+  collection,
+  getDocs
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+
+/* FIREBASE CONFIGURATION */
+
 const firebaseConfig = {
-apiKey: "AIzaSyAnlLd5OLIO0qDp1WrtvWQw5DNs8_tGCTI",
-authDomain: "classexam-57351.firebaseapp.com",
-projectId: "classexam-57351",
-storageBucket: "classexam-57351.firebasestorage.app",
-messagingSenderId: "688337040866",
-appId: "1:688337040866:web:f111d648d364a20dcbf5bb"
+  apiKey: "AIzaSyAnlLd5OLIO0qDp1WrtvWQw5DNs8_tGCTI",
+  authDomain: "classexam-57351.firebaseapp.com",
+  projectId: "classexam-57351",
+  storageBucket: "classexam-57351.firebasestorage.app",
+  messagingSenderId: "688337040866",
+  appId: "1:688337040866:web:f111d648d364a20dcbf5bb"
 };
 
-const app=initializeApp(firebaseConfig);
-const auth=getAuth(app);
-const db=getFirestore(app);
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-const loginArea=document.getElementById("loginArea");
-const studentArea=document.getElementById("studentArea");
-const examArea=document.getElementById("examArea");
-const questionsArea=document.getElementById("questions");
-const message=document.getElementById("loadMessage");
 
-let timerInterval=null;
-let timeLeft=3600;
-let examStarted=false;
+/* HTML ELEMENTS */
 
-document.getElementById("loginButton").onclick=async()=>{
-const email=document.getElementById("email").value.trim();
-const password=document.getElementById("password").value;
+const loginArea = document.getElementById("loginArea");
+const studentArea = document.getElementById("studentArea");
+const examArea = document.getElementById("examArea");
 
-try{
-await signInWithEmailAndPassword(auth,email,password);
-document.getElementById("loginMessage").textContent="";
-}catch(error){
-document.getElementById("loginMessage").textContent=
-"Login failed: "+error.message;
+const questionsArea = document.getElementById("questions");
+const message = document.getElementById("message");
+
+const loginMessage = document.getElementById("loginMessage");
+const startButton = document.getElementById("startButton");
+const finishButton = document.getElementById("finishButton");
+
+
+/* EXAM VARIABLES */
+
+let timerInterval = null;
+let timeLeft = 3600;
+let examStarted = false;
+
+
+/* FIELD NAME NORMALIZATION */
+
+function normalizeFieldName(value) {
+  return String(value)
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
 }
+
+function getField(data, fieldName) {
+  const wanted = normalizeFieldName(fieldName);
+
+  const actualKey = Object.keys(data).find(key =>
+    normalizeFieldName(key) === wanted
+  );
+
+  return actualKey === undefined ? "" : data[actualKey];
+}
+
+
+/* STUDENT LOGIN */
+
+document.getElementById("loginButton").onclick = async () => {
+
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+
+  if (!email || !password) {
+    loginMessage.textContent = "Enter your email and password.";
+    return;
+  }
+
+  loginMessage.textContent = "Logging in...";
+
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    loginMessage.textContent = "";
+
+  } catch (error) {
+    loginMessage.textContent = "Login failed: " + error.message;
+  }
 };
 
-onAuthStateChanged(auth,user=>{
-loginArea.style.display=user?"none":"block";
-studentArea.style.display=user?"block":"none";
-document.getElementById("logoutButton").style.display=
-user?"inline-block":"none";
 
-if(!user){
-examArea.style.display="none";
-examStarted=false;
-if(timerInterval)clearInterval(timerInterval);
-}
+/* AUTHENTICATION STATE */
+
+onAuthStateChanged(auth, user => {
+
+  loginArea.style.display = user ? "none" : "block";
+  studentArea.style.display = user ? "block" : "none";
+
+  document.getElementById("logoutButton").style.display =
+    user ? "inline-block" : "none";
+
+  if (!user) {
+    examArea.style.display = "none";
+    examStarted = false;
+
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+  }
 });
 
-document.getElementById("logoutButton").onclick=async()=>{
-if(timerInterval)clearInterval(timerInterval);
-examStarted=false;
-await signOut(auth);
+
+/* LOGOUT */
+
+document.getElementById("logoutButton").onclick = async () => {
+
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+
+  examStarted = false;
+
+  try {
+    await signOut(auth);
+  } catch (error) {
+    message.textContent = "Logout failed: " + error.message;
+  }
 };
 
-function startTimer(){
-timerInterval=setInterval(()=>{
-timeLeft--;
 
-const minutes=Math.floor(timeLeft/60);
-const seconds=timeLeft%60;
+/* EXAM TIMER */
 
-document.getElementById("timer").textContent=
-String(minutes).padStart(2,"0")+":"+
-String(seconds).padStart(2,"0");
+function startTimer() {
 
-if(timeLeft<=0)finishExam();
-},1000);
+  if (timerInterval) {
+    clearInterval(timerInterval);
+  }
+
+  timerInterval = setInterval(() => {
+
+    timeLeft--;
+
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+
+    document.getElementById("timer").textContent =
+      String(minutes).padStart(2, "0") + ":" +
+      String(seconds).padStart(2, "0");
+
+    if (timeLeft <= 0) {
+      finishExam();
+    }
+
+  }, 1000);
 }
 
-function finishExam(){
-if(!examStarted)return;
 
-examStarted=false;
-clearInterval(timerInterval);
+/* FINISH EXAM */
 
-document.getElementById("finishButton").disabled=true;
-document.getElementById("resultMessage").textContent=
-"Examination finished. Answer submission and grading are not yet implemented.";
+function finishExam() {
+
+  if (!examStarted) return;
+
+  examStarted = false;
+
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+
+  finishButton.disabled = true;
+
+  document.getElementById("resultMessage").textContent =
+    "Examination finished. Answer submission and grading are not yet implemented.";
 }
 
-document.getElementById("startButton").onclick=async()=>{
-if(!auth.currentUser){
-message.textContent="Please log in first.";
-return;
-}
+finishButton.onclick = finishExam;
 
-const name=document.getElementById("studentName").value.trim();
-const grade=document.getElementById("grade").value;
-const subject=document.getElementById("subject").value;
 
-if(!name){
-message.textContent="Please enter your name.";
-return;
-}
+/* START EXAMINATION */
 
-message.textContent="Connecting to question bank...";
-document.getElementById("startButton").disabled=true;
+startButton.onclick = async () => {
 
-try{
-const snapshot=await getDocs(
-collection(db,"publishedQuestions")
-);
+  if (!auth.currentUser) {
+    message.textContent = "Please log in first.";
+    return;
+  }
 
-if(snapshot.empty){
-message.textContent=
-"Firestore connected, but publishedQuestions contains no documents.";
-return;
-}
+  const name = document.getElementById("studentName").value.trim();
+  const grade = document.getElementById("grade").value.trim();
+  const subject = document.getElementById("subject").value.trim();
 
-const matchingDocs=snapshot.docs.filter(questionDoc=>{
-const data=questionDoc.data();
+  if (!name) {
+    message.textContent = "Please enter your name.";
+    return;
+  }
 
-return String(data.Grade||"").trim()===grade &&
-String(data.Subject||"").trim()===subject;
-});
+  message.textContent = "Connecting to question bank...";
+  startButton.disabled = true;
 
-if(matchingDocs.length===0){
-const found=snapshot.docs.map(d=>{
-const data=d.data();
-return String(data.Grade||"(missing)")+
-" / "+String(data.Subject||"(missing)");
-});
+  try {
 
-message.textContent=
-"Found "+snapshot.size+
-" published document(s), but none match your selection. " +
-"Available values: "+found.join("; ");
+    /* LOAD ALL PUBLISHED QUESTIONS */
 
-return;
-}
+    const snapshot = await getDocs(
+      collection(db, "publishedQuestions")
+    );
 
-questionsArea.replaceChildren();
+    if (snapshot.empty) {
+      message.textContent =
+        "Firestore connected, but publishedQuestions contains no documents.";
+      return;
+    }
 
-matchingDocs.forEach((questionDoc,index)=>{
-const data=questionDoc.data();
 
-const div=document.createElement("div");
-div.className="question";
+    /* FILTER QUESTIONS */
 
-const title=document.createElement("p");
-title.textContent=(index+1)+". "+(data.Question||"Question text missing");
-div.appendChild(title);
+    const matchingDocs = snapshot.docs.filter(questionDoc => {
 
-["A","B","C","D"].forEach(letter=>{
-const label=document.createElement("label");
-label.className="option";
+      const data = questionDoc.data();
 
-const radio=document.createElement("input");
-radio.type="radio";
-radio.name="question_"+questionDoc.id;
-radio.value=letter;
+      const savedGrade = String(
+        getField(data, "Grade")
+      ).trim().toLowerCase();
 
-label.appendChild(radio);
-label.appendChild(document.createTextNode(
-" "+letter+". "+(data["Option"+letter]||"")
-));
+      const savedSubject = String(
+        getField(data, "Subject")
+      ).trim().toLowerCase();
 
-div.appendChild(label);
-});
+      return savedGrade === grade.toLowerCase() &&
+             savedSubject === subject.toLowerCase();
+    });
 
-questionsArea.appendChild(div);
-});
 
-document.getElementById("studentInfo").textContent=
-"Student: "+name+" | "+grade+" | "+subject;
+    /* SHOW DIAGNOSTIC IF NO MATCH */
 
-studentArea.style.display="none";
-examArea.style.display="block";
+    if (matchingDocs.length === 0) {
 
-document.getElementById("resultMessage").textContent="";
-document.getElementById("finishButton").disabled=false;
+      const found = snapshot.docs.map(d => {
 
-timeLeft=3600;
-examStarted=true;
+        const data = d.data();
 
-document.getElementById("timer").textContent="60:00";
-startTimer();
+        return JSON.stringify({
+          documentId: d.id,
+          fields: Object.keys(data),
+          Grade: getField(data, "Grade"),
+          Subject: getField(data, "Subject")
+        });
 
-}catch(error){
-message.textContent="Could not load questions: "+error.message;
-}finally{
-document.getElementById("startButton").disabled=false;
-}
+      });
+
+      message.textContent =
+        "Found " + snapshot.size +
+        " published document(s), but none match your selection. Details: " +
+        found.join(" | ");
+
+      return;
+    }
+
+
+    /* DISPLAY MATCHING QUESTIONS */
+
+    questionsArea.replaceChildren();
+
+    matchingDocs.forEach((questionDoc, index) => {
+
+      const data = questionDoc.data();
+
+      const div = document.createElement("div");
+      div.className = "question";
+
+      const title = document.createElement("p");
+
+      title.textContent =
+        (index + 1) + ". " +
+        (getField(data, "Question") || "Question text missing");
+
+      div.appendChild(title);
+
+
+      /* OPTIONS A-D */
+
+      ["A", "B", "C", "D"].forEach(letter => {
+
+        const label = document.createElement("label");
+        label.className = "option";
+
+        const radio = document.createElement("input");
+
+        radio.type = "radio";
+        radio.name = "question_" + questionDoc.id;
+        radio.value = letter;
+
+        label.appendChild(radio);
+
+        label.appendChild(
+          document.createTextNode(
+            " " + letter + ". " +
+            (getField(data, "Option" + letter) || "")
+          )
+        );
+
+        div.appendChild(label);
+
+      });
+
+      questionsArea.appendChild(div);
+
+    });
+
+
+    /* OPEN EXAM */
+
+    document.getElementById("studentInfo").textContent =
+      "Student: " + name + " | " + grade + " | " + subject;
+
+    studentArea.style.display = "none";
+    examArea.style.display = "block";
+
+    message.textContent = "";
+
+    document.getElementById("resultMessage").textContent = "";
+
+    finishButton.disabled = false;
+
+    timeLeft = 3600;
+    examStarted = true;
+
+    document.getElementById("timer").textContent = "60:00";
+
+    startTimer();
+
+  } catch (error) {
+
+    message.textContent =
+      "Could not load questions: " + error.message;
+
+  } finally {
+
+    startButton.disabled = false;
+
+  }
+
 };
 
-document.getElementById("finishButton").onclick=finishExam;
 </script>
+
 </body>
 </html>
