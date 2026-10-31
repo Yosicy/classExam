@@ -6,16 +6,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ClassExam - Student Examination</title>
 <style>
+*{box-sizing:border-box}
 body{font-family:Arial,sans-serif;background:#f4f6fb;color:#172554;margin:0}
 header{background:#142b55;color:white;padding:20px}
 main{max-width:850px;margin:25px auto;padding:15px}
 .card{background:white;padding:20px;border-radius:12px;margin-bottom:18px}
-input,select{width:100%;padding:12px;margin:8px 0 15px;box-sizing:border-box}
-button{background:#142b55;color:white;padding:12px 20px;border:0;border-radius:7px;margin:5px 0}
+input:not([type=radio]),select{width:100%;padding:12px;margin:8px 0 15px}
+button{background:#142b55;color:white;padding:12px 20px;border:0;border-radius:7px;margin:5px 0;cursor:pointer}
+button:disabled{opacity:.5}
 .question{border-bottom:1px solid #ddd;padding:15px 0}
-.option{display:block;padding:8px}
+.option{display:block;padding:9px;cursor:pointer}
 #studentArea,#examArea{display:none}
-#timer{font-size:22px;font-weight:bold}
+#timer{font-size:24px;font-weight:bold}
+#message{color:#b45309}
 </style>
 </head>
 <body>
@@ -36,6 +39,7 @@ button{background:#142b55;color:white;padding:12px 20px;border:0;border-radius:7
 
 <section id="studentArea" class="card">
 <h2>Student Information</h2>
+
 <label>Student name</label>
 <input id="studentName" placeholder="Enter your name">
 
@@ -80,23 +84,27 @@ import {initializeApp}
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
 import {
-getAuth,signInWithEmailAndPassword,
-onAuthStateChanged,signOut
+getAuth,
+signInWithEmailAndPassword,
+onAuthStateChanged,
+signOut
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 import {
-getFirestore,collection,getDocs,query,where
+getFirestore,
+collection,
+getDocs
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// Replace with the same Firebase configuration used in admin.html.
 const firebaseConfig = {
-  apiKey: "AIzaSyAnlLd5OLIO0qDp1WrtvWQw5DNs8_tGCTI",
-  authDomain: "classexam-57351.firebaseapp.com",
-  projectId: "classexam-57351",
-  storageBucket: "classexam-57351.firebasestorage.app",
-  messagingSenderId: "688337040866",
-  appId: "1:688337040866:web:f111d648d364a20dcbf5bb"
+apiKey: "AIzaSyAnlLd5OLIO0qDp1WrtvWQw5DNs8_tGCTI",
+authDomain: "classexam-57351.firebaseapp.com",
+projectId: "classexam-57351",
+storageBucket: "classexam-57351.firebasestorage.app",
+messagingSenderId: "688337040866",
+appId: "1:688337040866:web:f111d648d364a20dcbf5bb"
 };
+
 const app=initializeApp(firebaseConfig);
 const auth=getAuth(app);
 const db=getFirestore(app);
@@ -105,18 +113,18 @@ const loginArea=document.getElementById("loginArea");
 const studentArea=document.getElementById("studentArea");
 const examArea=document.getElementById("examArea");
 const questionsArea=document.getElementById("questions");
+const message=document.getElementById("loadMessage");
 
 let timerInterval=null;
-let timeLeft=60*60;
+let timeLeft=3600;
 let examStarted=false;
 
 document.getElementById("loginButton").onclick=async()=>{
+const email=document.getElementById("email").value.trim();
+const password=document.getElementById("password").value;
+
 try{
-await signInWithEmailAndPassword(
-auth,
-document.getElementById("email").value.trim(),
-document.getElementById("password").value
-);
+await signInWithEmailAndPassword(auth,email,password);
 document.getElementById("loginMessage").textContent="";
 }catch(error){
 document.getElementById("loginMessage").textContent=
@@ -129,77 +137,107 @@ loginArea.style.display=user?"none":"block";
 studentArea.style.display=user?"block":"none";
 document.getElementById("logoutButton").style.display=
 user?"inline-block":"none";
+
 if(!user){
 examArea.style.display="none";
+examStarted=false;
+if(timerInterval)clearInterval(timerInterval);
 }
 });
 
 document.getElementById("logoutButton").onclick=async()=>{
-if(timerInterval) clearInterval(timerInterval);
+if(timerInterval)clearInterval(timerInterval);
+examStarted=false;
 await signOut(auth);
 };
 
 function startTimer(){
 timerInterval=setInterval(()=>{
 timeLeft--;
+
 const minutes=Math.floor(timeLeft/60);
 const seconds=timeLeft%60;
+
 document.getElementById("timer").textContent=
 String(minutes).padStart(2,"0")+":"+
 String(seconds).padStart(2,"0");
 
-if(timeLeft<=0){
-finishExam();
-}
+if(timeLeft<=0)finishExam();
 },1000);
 }
 
-async function finishExam(){
+function finishExam(){
 if(!examStarted)return;
+
 examStarted=false;
 clearInterval(timerInterval);
+
 document.getElementById("finishButton").disabled=true;
 document.getElementById("resultMessage").textContent=
-"Examination finished. Your answers are not yet submitted to the server.";
+"Examination finished. Answer submission and grading are not yet implemented.";
 }
 
 document.getElementById("startButton").onclick=async()=>{
+if(!auth.currentUser){
+message.textContent="Please log in first.";
+return;
+}
+
 const name=document.getElementById("studentName").value.trim();
 const grade=document.getElementById("grade").value;
 const subject=document.getElementById("subject").value;
-const message=document.getElementById("loadMessage");
 
 if(!name){
 message.textContent="Please enter your name.";
 return;
 }
 
-message.textContent="Loading questions...";
+message.textContent="Connecting to question bank...";
+document.getElementById("startButton").disabled=true;
 
 try{
-const q=query(
-collection(db,"publishedQuestions"),
-where("Grade","==",grade),
-where("Subject","==",subject)
+const snapshot=await getDocs(
+collection(db,"publishedQuestions")
 );
 
-const snapshot=await getDocs(q);
-
 if(snapshot.empty){
-message.textContent="No published questions found for this grade and subject.";
+message.textContent=
+"Firestore connected, but publishedQuestions contains no documents.";
 return;
 }
 
-questionsArea.innerHTML="";
+const matchingDocs=snapshot.docs.filter(questionDoc=>{
+const data=questionDoc.data();
 
-snapshot.forEach((doc,index)=>{
-const data=doc.data();
+return String(data.Grade||"").trim()===grade &&
+String(data.Subject||"").trim()===subject;
+});
+
+if(matchingDocs.length===0){
+const found=snapshot.docs.map(d=>{
+const data=d.data();
+return String(data.Grade||"(missing)")+
+" / "+String(data.Subject||"(missing)");
+});
+
+message.textContent=
+"Found "+snapshot.size+
+" published document(s), but none match your selection. " +
+"Available values: "+found.join("; ");
+
+return;
+}
+
+questionsArea.replaceChildren();
+
+matchingDocs.forEach((questionDoc,index)=>{
+const data=questionDoc.data();
 
 const div=document.createElement("div");
 div.className="question";
 
 const title=document.createElement("p");
-title.textContent=(index+1)+". "+data.Question;
+title.textContent=(index+1)+". "+(data.Question||"Question text missing");
 div.appendChild(title);
 
 ["A","B","C","D"].forEach(letter=>{
@@ -208,13 +246,14 @@ label.className="option";
 
 const radio=document.createElement("input");
 radio.type="radio";
-radio.name="question_"+doc.id;
+radio.name="question_"+questionDoc.id;
 radio.value=letter;
 
 label.appendChild(radio);
 label.appendChild(document.createTextNode(
-letter+". "+data["Option"+letter]
+" "+letter+". "+(data["Option"+letter]||"")
 ));
+
 div.appendChild(label);
 });
 
@@ -226,20 +265,24 @@ document.getElementById("studentInfo").textContent=
 
 studentArea.style.display="none";
 examArea.style.display="block";
+
 document.getElementById("resultMessage").textContent="";
 document.getElementById("finishButton").disabled=false;
 
-timeLeft=60*60;
+timeLeft=3600;
 examStarted=true;
+
+document.getElementById("timer").textContent="60:00";
 startTimer();
 
 }catch(error){
 message.textContent="Could not load questions: "+error.message;
+}finally{
+document.getElementById("startButton").disabled=false;
 }
 };
 
 document.getElementById("finishButton").onclick=finishExam;
 </script>
 </body>
-  </html>
-  
+</html>
